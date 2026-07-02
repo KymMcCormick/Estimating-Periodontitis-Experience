@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it as below."
+title: "perioepe: Expected Periodontitis Experience under Informative Tooth Loss"
+authors:
+  - family-names: McCormick
+    given-names: Kym
+version: 0.0.0.9000
+date-released: 2026-07-03
+license: MIT
+repository-code: "https://github.com/YOUR-USERNAME/perioepe"
