@@ -1,0 +1,7 @@
+^scripts$
+^data$
+^outputs$
+^docs$
+^\.github$
+^.*\.Rproj$
+^README\.Rmd$
