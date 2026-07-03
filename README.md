@@ -23,6 +23,12 @@ Place the required NHANES `.xpt` files in `data/raw/`, then run:
 source("scripts/00_setup.R")
 source("scripts/01_prepare_nhanes_core.R")
 source("scripts/02_build_epe_iteration01.R")
+
+# Optional downstream diagnostics and validation tables
+source("scripts/03_diagnose_incident_attribution_model.R")
+source("scripts/04_summarise_epe_distribution.R")
+source("scripts/05_assess_hba1c_associational_coherence.R")
+source("scripts/06_assess_diabetes_discrimination_auc.R")
 ```
 
 Or from a terminal:
@@ -30,6 +36,10 @@ Or from a terminal:
 ```bash
 Rscript scripts/01_prepare_nhanes_core.R
 Rscript scripts/02_build_epe_iteration01.R
+Rscript scripts/03_diagnose_incident_attribution_model.R
+Rscript scripts/04_summarise_epe_distribution.R
+Rscript scripts/05_assess_hba1c_associational_coherence.R
+Rscript scripts/06_assess_diabetes_discrimination_auc.R
 ```
 
 ## Required NHANES input files
@@ -62,6 +72,18 @@ The primary script writes:
 | `data/processed/analytic_dataset_epe.csv` | Main analytic dataset |
 | `data/processed/analytic_dataset_epe.rds` | Main analytic dataset, R format |
 | `outputs/figures/` | Diagnostic figures for the attribution model and missing-tooth curve |
+
+Additional downstream scripts write validation and reporting outputs including:
+
+| Output | Description |
+|---|---|
+| `outputs/tables/supp_table_population_means_ci_periodontal_measures_by_age.csv` | Survey-weighted EPE and comparator summaries by age group |
+| `outputs/tables/hba1c_rank_correlations_periodontal_measures.csv` | Design-weighted rank-correlation approximation with HbA1c |
+| `outputs/tables/hba1c_single_measure_regressions.csv` | Survey-weighted single-measure HbA1c regressions |
+| `outputs/tables/hba1c_joint_measure_regressions.csv` | Joint HbA1c regression models for overlapping periodontal summaries |
+| `outputs/tables/diabetes_discrimination_auc_table.csv` | Survey-weighted AUCs for diabetes discrimination |
+| `outputs/tables/diabetes_discrimination_auc_differences.csv` | Bootstrap differences in AUC comparing EPE with observed-site measures |
+| `outputs/tables/incident_periodontal_attribution_leave_one_source_out.csv` | Leave-one-source-out sensitivity summary for the incident attribution model |
 
 ## Naming convention
 

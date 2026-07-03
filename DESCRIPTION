@@ -1,6 +1,6 @@
 Package: perioepe
 Title: Estimate Expected Periodontitis Experience Under Informative Tooth Loss
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: c(
     person("Kym", "McCormick", role = c("aut", "cre"), email = "your.email@example.com")
   )
@@ -8,21 +8,28 @@ Description: Early-stage tools for estimating Expected Periodontitis Experience
     from observed periodontal data when tooth loss is treated as informative
     missingness. The current version supports a first-iteration model using
     age, observed tooth-level CAL, missing teeth, and age-specific extraction
-    attribution evidence.
+    attribution evidence, with downstream descriptive, HbA1c coherence, and
+    diabetes-discrimination analyses.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
+    broom,
     dplyr,
-    tidyr,
+    ggplot2,
+    haven,
+    httr,
+    patchwork,
+    pROC,
     purrr,
     readr,
-    tibble,
-    haven,
-    ggplot2,
     scales,
-    survey
+    splines,
+    stringr,
+    survey,
+    tibble,
+    tidyr
 Suggests:
     testthat (>= 3.0.0),
     roxygen2,
