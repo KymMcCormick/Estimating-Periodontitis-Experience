@@ -1,42 +1,58 @@
-# R/make_max_cal_by_tooth.R
-# Construct tooth-level maximum CAL from NHANES site-level periodontal CAL columns.
+# code/functions/make_max_cal_by_tooth.R
+# Construct tooth-level maximum clinical attachment loss (CAL) from NHANES OHXPER files.
+#
+# - NHANES periodontal exam includes multiple sites per tooth.
+# - CAL is recorded at sites with variable names beginning with OHX<tooth><site>.
+# - This function:
+#   1) selects CAL variables for retained teeth (excludes 01,16,17,32),
+#   2) recodes 99 and negative values to NA (NHANES missing codes),
+#   3) computes per-tooth max CAL across sites,
+#   4) returns a wide dataset with columns CAL_02 ... CAL_31 plus SEQN.
 
-make_max_cal_by_tooth <- function(df, exclude_third_molars = TRUE) {
-  if (!"SEQN" %in% names(df)) {
-    stop("Input data must contain SEQN.")
+make_max_cal_by_tooth <- function(
+    ohxper_df,
+    patterns_CAL = c("LAS", "LAD", "LAP", "LAA"),
+    teeth_keep = sprintf("%02d", setdiff(1:32, c(1, 16, 17, 32)))
+) {
+  
+  df <- dplyr::as_tibble(ohxper_df)
+  
+  cal_cols <- names(df)[
+    grepl(paste0(patterns_CAL, collapse = "|"), names(df)) &
+      grepl("^OHX\\d{2}", names(df))
+  ]
+  
+  df_cal <- df %>%
+    dplyr::select(SEQN, dplyr::all_of(cal_cols)) %>%
+    dplyr::mutate(
+      dplyr::across(
+        -SEQN,
+        ~ {
+          x <- as.numeric(.x)
+          x[x == 99 | x < 0] <- NA_real_
+          x
+        }
+      )
+    )
+  
+  out <- df_cal %>% dplyr::select(SEQN)
+  
+  for (tooth in teeth_keep) {
+    tooth_cols <- names(df_cal)[
+      grepl(paste0("^OHX", tooth), names(df_cal)) &
+        grepl(paste0(patterns_CAL, collapse = "|"), names(df_cal))
+    ]
+    
+    colname <- paste0("CAL_", tooth)
+    
+    if (length(tooth_cols) == 0) {
+      out[[colname]] <- NA_real_
+    } else {
+      out[[colname]] <- do.call(pmax, c(df_cal[tooth_cols], na.rm = TRUE))
+      out[[colname]][is.infinite(out[[colname]])] <- NA_real_
+    }
   }
-
-  cal_cols <- names(df)[grepl("^OHX\\d{2}LA[A-Z]$", names(df))]
-
-  if (length(cal_cols) == 0) {
-    stop("No site-level CAL columns found. Expected names like OHX02LAD.")
-  }
-
-  tooth_numbers <- sort(unique(as.integer(sub("^OHX(\\d{2}).*$", "\\1", cal_cols))))
-
-  if (exclude_third_molars) {
-    tooth_numbers <- setdiff(tooth_numbers, c(1, 16, 17, 32))
-  }
-
-  out <- tibble::tibble(SEQN = df$SEQN)
-
-  for (tooth in tooth_numbers) {
-    tooth_prefix <- sprintf("OHX%02dLA", tooth)
-    tooth_cols <- cal_cols[startsWith(cal_cols, tooth_prefix)]
-
-    cal_mat <- as.matrix(df[, tooth_cols, drop = FALSE])
-    storage.mode(cal_mat) <- "numeric"
-
-    # NHANES periodontal missing / invalid codes should not be treated as CAL.
-    cal_mat[cal_mat %in% c(99, 999)] <- NA_real_
-    cal_mat[cal_mat < 0 | cal_mat > 30] <- NA_real_
-
-    max_cal <- apply(cal_mat, 1, function(x) {
-      if (all(is.na(x))) NA_real_ else max(x, na.rm = TRUE)
-    })
-
-    out[[sprintf("CAL_%02d", tooth)]] <- max_cal
-  }
-
+  
   out
 }
+
