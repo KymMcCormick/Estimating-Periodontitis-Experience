@@ -894,11 +894,7 @@ analytic_cumulative <- epe_cumulative |>
       labels = c("30\u201339", "40\u201349", "50\u201359", "60\u201369", "70\u201379", "80+"),
       right = FALSE
     )
-  ) |>
-  dplyr::filter(
-    !is.na(DiabetesStatus),
-    !is.na(AgeGroup_Table2)
-  )
+  ) 
 
 analytic_cumulative <- analytic_cumulative |>
   dplyr::left_join(
@@ -927,6 +923,10 @@ analytic_cumulative <- analytic_cumulative |>
     epe_mean_tooth = EPE_mean_tooth,
     epe = EPE
   )
+
+message("Rows in analytic_cumulative before site-measure join: ", nrow(analytic_cumulative))
+message("Rows with non-missing HbA1c: ", sum(!is.na(analytic_cumulative$LBXGH)))
+message("Rows with non-missing diabetes status: ", sum(!is.na(analytic_cumulative$DiabetesStatus)))
 
 readr::write_csv(
   analytic_cumulative,

@@ -27,8 +27,13 @@ read_nhanes_xpt <- function(filename) {
 }
 
 cycle_from_filename <- function(filename) {
-  # DEMO_F.xpt -> F
-  sub("^.*_([A-Z])\\.xpt$", "\\1", toupper(filename))
+  out <- sub("^.*_([A-Z])\\.XPT$", "\\1", toupper(basename(filename)))
+  
+  if (identical(out, toupper(basename(filename)))) {
+    stop("Could not extract NHANES cycle from filename: ", filename)
+  }
+  
+  out
 }
 
 # ---- file lists ----
