@@ -35,3 +35,19 @@ Main output: `data/processed/analytic_dataset_epe.csv` and `.rds`.
 | `mean_CAL` | Copy of `mean_CAL_site` for convenience |
 
 Note: some variables retain uppercase because they originate in the current analysis script. Future refactoring should migrate all derived variables to snake_case while preserving NHANES source names.
+
+
+## Downstream validation/reporting outputs
+
+| File | Created by | Description |
+|---|---|---|
+| `outputs/tables/supp_table_population_means_ci_periodontal_measures_by_age.csv` | `scripts/04_summarise_epe_distribution.R` | Survey-weighted mean and 95% CI summaries by age group and overall. |
+| `outputs/tables/hba1c_rank_correlations_periodontal_measures.csv` | `scripts/05_assess_hba1c_associational_coherence.R` | Design-weighted rank-correlation approximation between HbA1c and each periodontal measure. |
+| `outputs/tables/hba1c_single_measure_regressions.csv` | `scripts/05_assess_hba1c_associational_coherence.R` | Single-measure survey-weighted HbA1c regression coefficients. |
+| `outputs/tables/hba1c_joint_measure_regressions.csv` | `scripts/05_assess_hba1c_associational_coherence.R` | Joint survey-weighted HbA1c regression coefficients for overlapping periodontal summaries. |
+| `outputs/tables/diabetes_discrimination_sample_summary.csv` | `scripts/06_assess_diabetes_discrimination_auc.R` | Unweighted and approximate weighted sample counts for normal glycaemia and diabetes groups. |
+| `outputs/tables/diabetes_discrimination_auc_table.csv` | `scripts/06_assess_diabetes_discrimination_auc.R` | Survey-weighted AUC estimates and bootstrap confidence intervals. |
+| `outputs/tables/diabetes_discrimination_auc_differences.csv` | `scripts/06_assess_diabetes_discrimination_auc.R` | Bootstrap AUC differences comparing EPE with observed-site measures. |
+| `outputs/tables/diabetes_discrimination_auc_publication_table.csv` | `scripts/06_assess_diabetes_discrimination_auc.R` | Compact publication-ready AUC table. |
+| `outputs/tables/incident_periodontal_attribution_selected_ages.csv` | `scripts/03_diagnose_incident_attribution_model.R` | Incident attribution probabilities at selected ages. |
+| `outputs/tables/incident_periodontal_attribution_leave_one_source_out.csv` | `scripts/03_diagnose_incident_attribution_model.R` | Leave-one-source-out sensitivity table for the incident attribution curve. |
