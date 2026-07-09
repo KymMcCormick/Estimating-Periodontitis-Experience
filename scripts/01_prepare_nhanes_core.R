@@ -1,12 +1,13 @@
 # scripts/01_prepare_nhanes_core.R
-# Clean and merge NHANES demographics (age) and HbA1c into a participant-level dataset.
+# Prepare participant-level NHANES core data for periodontal analysis projects.
+# Includes demographics, survey design variables, examination weights, cycle, and HbA1c.
 
 source("scripts/00_setup.R")
-source("R/utils_io.R")
 
-dir.create("data/processed", recursive = TRUE, showWarnings = FALSE)
+# ------------------------------------------------------------
+# 1. Helpers
+# ------------------------------------------------------------
 
-# ---- helpers ----
 peek_header <- function(path, n = 60) {
   rawToChar(readBin(path, what = "raw", n = n))
 }
@@ -36,41 +37,77 @@ cycle_from_filename <- function(filename) {
   out
 }
 
-# ---- file lists ----
-demo_files <- c("DEMO_F.xpt","DEMO_G.xpt","DEMO_H.xpt")
-ghb_files  <- c("GHB_F.xpt","GHB_G.xpt","GHB_H.xpt")
+na_mean <- function(x) {
+  if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)
+}
 
-cols_demo <- c("SEQN","RIDAGEYR", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")
-cols_ghb  <- c("SEQN","LBXGH")
 
-# ---- Demographics (age) ----
+# ------------------------------------------------------------
+# 2. NHANES files
+# ------------------------------------------------------------
+
+demo_files <- c("DEMO_F.xpt", "DEMO_G.xpt", "DEMO_H.xpt")
+ghb_files  <- c("GHB_F.xpt",  "GHB_G.xpt",  "GHB_H.xpt")
+
+cols_demo <- c("SEQN", "RIDAGEYR", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")
+cols_ghb  <- c("SEQN", "LBXGH")
+
+
+# ------------------------------------------------------------
+# 3. Demographics and survey variables
+# ------------------------------------------------------------
+
 demo <- purrr::map_dfr(demo_files, function(f) {
-  df <- read_nhanes_xpt(f)
-  df %>%
+  read_nhanes_xpt(f) %>%
     dplyr::select(dplyr::any_of(cols_demo)) %>%
     dplyr::mutate(source_cycle = cycle_from_filename(f))
 }) %>%
-  # optional: if any duplicates occur within a cycle, keep first non-missing age
   dplyr::arrange(SEQN, source_cycle) %>%
-  dplyr::filter(!is.na(RIDAGEYR) & RIDAGEYR >= 30)  # manuscript: adults aged ≥30
+  dplyr::filter(!is.na(RIDAGEYR), RIDAGEYR >= 30) %>%
+  dplyr::mutate(
+    age = as.numeric(RIDAGEYR),
+    wtmec2yr = as.numeric(WTMEC2YR),
+    wtmec6yr = wtmec2yr / 3,
+    sdmvpsu = SDMVPSU,
+    sdmvstra = SDMVSTRA
+  )
 
-# ---- HbA1c (glycohemoglobin) ----
+
+# ------------------------------------------------------------
+# 4. HbA1c
+# ------------------------------------------------------------
+
 ghb <- purrr::map_dfr(ghb_files, function(f) {
-  df <- read_nhanes_xpt(f)
-  df %>%
+  read_nhanes_xpt(f) %>%
     dplyr::select(dplyr::any_of(cols_ghb)) %>%
     dplyr::mutate(source_cycle = cycle_from_filename(f))
 }) %>%
-  dplyr::mutate(LBXGH = as.numeric(LBXGH)) %>%
-  # If there is ever >1 record per SEQN within a cycle, average within-cycle first.
+  dplyr::mutate(hba1c = as.numeric(LBXGH)) %>%
   dplyr::group_by(SEQN, source_cycle) %>%
-  dplyr::summarise(LBXGH = mean(LBXGH, na.rm = TRUE), .groups = "drop")
-
-# ---- merge ----
-demo_ghb <- demo %>%
-  dplyr::left_join(ghb, by = c("SEQN", "source_cycle"))
-
-saveRDS(demo_ghb, "data/processed/nhanes_demographics_hba1c.rds")
-message("Saved: data/processed/nhanes_demographics_hba1c.rds")
+  dplyr::summarise(
+    hba1c = na_mean(hba1c),
+    .groups = "drop"
+  )
 
 
+# ------------------------------------------------------------
+# 5. Merge and save
+# ------------------------------------------------------------
+
+nhanes_core <- demo %>%
+  dplyr::left_join(ghb, by = c("SEQN", "source_cycle")) %>%
+  dplyr::select(
+    SEQN,
+    source_cycle,
+    age,
+    wtmec2yr,
+    wtmec6yr,
+    sdmvpsu,
+    sdmvstra,
+    hba1c,
+    dplyr::everything()
+  )
+
+saveRDS(nhanes_core, "data/processed/nhanes_participant_core.rds")
+
+message("Saved: data/processed/nhanes_participant_core.rds")

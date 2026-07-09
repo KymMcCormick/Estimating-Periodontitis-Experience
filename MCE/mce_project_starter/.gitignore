@@ -1,0 +1,16 @@
+# Data and derived outputs
+/data/raw/*
+/data/derived/*
+!/data/raw/.gitkeep
+!/data/derived/.gitkeep
+/outputs/tables/*
+/outputs/figures/*
+!/outputs/tables/.gitkeep
+!/outputs/figures/.gitkeep
+
+# R/session files
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
