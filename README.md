@@ -1,153 +1,72 @@
-# perioepe
+\# Expected Periodontitis Experience (EPE)
 
-**perioepe** is an early-stage repository for estimating **Expected Periodontitis Experience (EPE)** from observed periodontal examination data when tooth loss is informative.
 
-The first iteration uses:
 
-1. observed tooth-level maximum clinical attachment loss (CAL) among retained teeth,
-2. missing tooth counts,
-3. age, and
-4. an age-specific periodontal-attribution model for extraction reasons.
+A methodological framework for estimating population-level periodontal disease experience under informative tooth loss.
 
-The current model does **not** reconstruct individual disease histories or identify the true cause of loss for any given missing tooth. It estimates expected periodontal experience under transparent assumptions about informative missingness.
 
-## Repository status
 
-This is a research-code repository in transition toward an R package. The current scripts are designed to reproduce the first EPE analytic dataset from NHANES 2009--2014 files. The `R/` folder contains reusable functions that can later become package functions.
+\## Current implementation
 
-## Recommended run order
 
-Place the required NHANES `.xpt` files in `data/raw/`, then run:
 
-```r
-source("scripts/00_setup.R")
-source("scripts/01_prepare_nhanes_core.R")
-source("scripts/02_build_epe_iteration01.R")
+The CDOE 2026 implementation (./CDOE\_2026/) contains the analytical code accompanying:
 
-# Optional downstream diagnostics and validation tables
-source("scripts/03_diagnose_incident_attribution_model.R")
-source("scripts/04_summarise_epe_distribution.R")
-source("scripts/05_assess_hba1c_associational_coherence.R")
-source("scripts/06_assess_diabetes_discrimination_auc.R")
-```
 
-Or from a terminal:
 
-```bash
-Rscript scripts/01_prepare_nhanes_core.R
-Rscript scripts/02_build_epe_iteration01.R
-Rscript scripts/03_diagnose_incident_attribution_model.R
-Rscript scripts/04_summarise_epe_distribution.R
-Rscript scripts/05_assess_hba1c_associational_coherence.R
-Rscript scripts/06_assess_diabetes_discrimination_auc.R
-```
+McCormick, K. M., Guzzo, G., \& Amarasena, N. (2026). Estimating Periodontitis Experience Under Informative Tooth Loss. Community Dentistry and Oral Epidemiology.
 
-## Required NHANES input files
 
-The first iteration expects the following files in `data/raw/`:
 
-| File | NHANES cycle | Purpose |
-|---|---:|---|
-| `DEMO_F.xpt` | 2009--2010 | Demographics, age, survey design variables |
-| `DEMO_G.xpt` | 2011--2012 | Demographics, age, survey design variables |
-| `DEMO_H.xpt` | 2013--2014 | Demographics, age, survey design variables |
-| `GHB_F.xpt` | 2009--2010 | HbA1c / glycohemoglobin |
-| `GHB_G.xpt` | 2011--2012 | HbA1c / glycohemoglobin |
-| `GHB_H.xpt` | 2013--2014 | HbA1c / glycohemoglobin |
-| `OHXPER_F.xpt` | 2009--2010 | Periodontal examination |
-| `OHXPER_G.xpt` | 2011--2012 | Periodontal examination |
-| `OHXPER_H.xpt` | 2013--2014 | Periodontal examination |
+The reproducibility pipeline includes NHANES data preparation, periodontal-attribution calibration, EPE estimation, complex survey analyses, and sensitivity analyses.
 
-NHANES raw data are not stored in this repository.
 
-## Main outputs
 
-The primary script writes:
+Full execution instructions and data requirements are provided in the publication README (./CDOE\_2026/README.md).
 
-| Output | Description |
-|---|---|
-| `data/processed/nhanes_demographics_hba1c.rds` | Participant-level age, HbA1c, cycle and survey-design variables |
-| `data/processed/incident_periodontal_attribution_lookup.csv` | Age-specific incident periodontal-attribution curve, `q_incident` |
-| `data/processed/cumulative_periodontal_attribution_lookup.csv` | Age-specific cumulative missing-tooth attribution curve, `pi_cumulative` |
-| `data/processed/analytic_dataset_epe.csv` | Main analytic dataset |
-| `data/processed/analytic_dataset_epe.rds` | Main analytic dataset, R format |
-| `outputs/figures/` | Diagnostic figures for the attribution model and missing-tooth curve |
 
-Additional downstream scripts write validation and reporting outputs including:
 
-| Output | Description |
-|---|---|
-| `outputs/tables/supp_table_population_means_ci_periodontal_measures_by_age.csv` | Survey-weighted EPE and comparator summaries by age group |
-| `outputs/tables/hba1c_rank_correlations_periodontal_measures.csv` | Design-weighted rank-correlation approximation with HbA1c |
-| `outputs/tables/hba1c_single_measure_regressions.csv` | Survey-weighted single-measure HbA1c regressions |
-| `outputs/tables/hba1c_joint_measure_regressions.csv` | Joint HbA1c regression models for overlapping periodontal summaries |
-| `outputs/tables/diabetes_discrimination_auc_table.csv` | Survey-weighted AUCs for diabetes discrimination |
-| `outputs/tables/diabetes_discrimination_auc_differences.csv` | Bootstrap differences in AUC comparing EPE with observed-site measures |
-| `outputs/tables/incident_periodontal_attribution_leave_one_source_out.csv` | Leave-one-source-out sensitivity summary for the incident attribution model |
+\## Repository structure
 
-## Naming convention
 
-This repository uses the following rule:
 
-- **NHANES source variables** retain their original uppercase names, for example `SEQN`, `RIDAGEYR`, `WTMEC2YR`, `SDMVPSU`, `SDMVSTRA`, and `LBXGH`.
-- **Derived variables** use `snake_case`, for example `n_missing_teeth`, `pi_cumulative`, `expected_missing_burden`, and `mean_extent_3to6mm`.
-- **Participant-level datasets** use the prefix `nhanes_` or `analytic_`.
-- **Model lookup tables** use the suffix `_lookup`.
-- **Scripts** are numbered by pipeline order.
+\- CDOE\_2026/ — Current publication implementation.
 
-See `docs/naming-conventions.md` for details.
+\- MCE/ — Research on cumulative exceedance measures.
 
-## Conceptual model
+\- legacy/ — Superseded EPE implementations retained for historical transparency.
 
-The first iteration distinguishes two quantities:
 
-- `q_incident(a)`: probability that an extraction at age `a` is attributed to periodontitis.
-- `pi_cumulative(A)`: expected periodontal-attribution weight for a tooth already missing at examination age `A`.
 
-EPE then combines observed retained-tooth CAL with the expected contribution from missing teeth:
+The legacy implementation is not recommended for reproducing the CDOE publication.
 
-```text
-epe_total = observed_retained_burden + expected_missing_burden
-```
 
-where:
 
-```text
-expected_missing_burden = n_missing_teeth * pi_cumulative(age) * assigned_missing_cal
-```
+\## Research development
 
-The default analytic variable `epe` is currently set to `epe_mean_tooth`, which standardises `epe_total` by the number of modelled teeth.
 
-## Project structure
 
-```text
-perioepe/
-├── R/                         # reusable functions, future package functions
-├── scripts/                   # executable research pipeline
-│   └── legacy/                # uploaded scripts preserved for provenance
-├── data/
-│   ├── raw/                   # local NHANES XPT files; not tracked by Git
-│   └── processed/             # generated analytic data; not tracked by Git
-├── outputs/
-│   ├── figures/               # generated figures; not tracked by Git
-│   └── tables/                # generated tables; not tracked by Git
-├── docs/                      # model notes, naming conventions, roadmap
-└── tests/                     # early unit tests for package transition
-```
+This repository supports ongoing methodological research into periodontal measurement under informative tooth loss.
 
-## Roadmap
 
-Planned extensions include:
 
-1. validation against diabetes / HbA1c patterning,
-2. age-by-tooth-position imputation models,
-3. neighbourhood-informed tooth-level models,
-4. sensitivity analyses for the assigned burden of missing teeth,
-5. generalised functions for non-NHANES datasets, and
-6. conversion to a documented R package.
+\## Licence
 
-See `docs/roadmap-to-r-package.md`.
 
-## Important caution
 
-EPE is an expectation-based measurement framework. It is intended to make assumptions explicit and testable; it should not be interpreted as a definitive reconstruction of the true reason for any individual tooth loss event.
+See LICENSE (./LICENSE).
+
+
+
+\## Contact
+
+
+
+Dr Kym M. McCormick  
+
+Australian Research Centre for Population Oral Health  
+
+Adelaide Dental School, Adelaide University  
+
+kym.mccormick@adelaide.edu.au
+

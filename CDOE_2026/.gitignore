@@ -1,0 +1,13 @@
+# Local datasets and generated outputs
+/data/
+/outputs/
+
+# Superseded analysis
+/10_sensitivity_leave_one_source_out_downstream.R
+
+# R temporary and session files
+.Rhistory
+.RData
+.RDataTmp
+.Ruserdata
+.Rproj.user/
